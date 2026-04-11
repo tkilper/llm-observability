@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(gh repo:*)",
+      "Bash(where gh:*)",
+      "Bash(powershell -Command \"Get-Command gh | Select-Object -ExpandProperty Source\")"
+    ]
+  }
+}
