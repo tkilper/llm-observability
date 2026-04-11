@@ -148,7 +148,7 @@ def generate_event(anomaly_type: str | None = None) -> dict:
 
     return {
         "event_id": str(uuid.uuid4()),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f") + "+00:00",
         "model": model_name,
         "provider": model["provider"],
         "user_id": user_id,
