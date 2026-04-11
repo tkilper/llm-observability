@@ -1,0 +1,466 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["llm", "observability", "kafka", "flink"],
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "LLM Observability",
+  "uid": "llm-observability",
+  "version": 1,
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Requests",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT COUNT(*) AS value FROM llm_events WHERE $__timeFilter(ts)",
+        "format": "table"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total Cost (USD)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT ROUND(SUM(cost_usd)::numeric, 4) AS value FROM llm_events WHERE $__timeFilter(ts)",
+        "format": "table"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Avg Latency (success only)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT ROUND(AVG(latency_ms)::numeric, 0) AS value FROM llm_events WHERE $__timeFilter(ts) AND status = 'success'",
+        "format": "table"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1000 },
+              { "color": "red", "value": 3000 }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Active Anomalies",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT COUNT(*) AS value FROM anomaly_events WHERE $__timeFilter(detected_at)",
+        "format": "table"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "orientation": "auto",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Event Rate by Model (per min)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT $__timeGroupAlias(ts,'1m'), model, COUNT(*) AS \"events\" FROM llm_events WHERE $__timeFilter(ts) GROUP BY 1, 2 ORDER BY 1",
+        "format": "time_series"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "spanNulls": true },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Error Rate by Model (%)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT $__timeGroupAlias(ts,'1m'), model, ROUND(100.0 * SUM(CASE WHEN status != 'success' THEN 1 ELSE 0 END) / COUNT(*)::numeric, 1) AS \"error_rate_%\" FROM llm_events WHERE $__timeFilter(ts) GROUP BY 1, 2 ORDER BY 1",
+        "format": "time_series"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "spanNulls": true },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 15 },
+              { "color": "red", "value": 40 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+
+    {
+      "id": 7,
+      "type": "barchart",
+      "title": "Total Cost by Model (USD)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT model, ROUND(SUM(total_cost_usd)::numeric, 4) AS \"Total Cost (USD)\" FROM cost_rollups_hourly WHERE $__timeFilter(window_start) GROUP BY model ORDER BY 2 DESC",
+        "format": "table"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 80, "gradientMode": "none" },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "barRadius": 0.05,
+        "groupWidth": 0.7,
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "orientation": "auto",
+        "tooltip": { "mode": "single", "sort": "none" },
+        "xTickLabelRotation": -15
+      }
+    },
+
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Cost Over Time by Model (USD)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT $__timeGroupAlias(window_start,'5m'), model, SUM(total_cost_usd) AS \"cost_usd\" FROM cost_rollups_hourly WHERE $__timeFilter(window_start) GROUP BY 1, 2 ORDER BY 1",
+        "format": "time_series"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 15, "showPoints": "never", "spanNulls": true },
+          "unit": "currencyUSD",
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Avg Latency by Model (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT $__timeGroupAlias(ts,'1m'), model, ROUND(AVG(latency_ms)::numeric, 0) AS \"avg_latency_ms\" FROM llm_events WHERE $__timeFilter(ts) AND status = 'success' GROUP BY 1, 2 ORDER BY 1",
+        "format": "time_series"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "spanNulls": true },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Token Usage by Model (per min)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT $__timeGroupAlias(ts,'1m'), model, SUM(total_tokens) AS \"tokens\" FROM llm_events WHERE $__timeFilter(ts) GROUP BY 1, 2 ORDER BY 1",
+        "format": "time_series"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "spanNulls": true },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Anomaly Events",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT detected_at AS \"Detected At\", anomaly_type AS \"Type\", model AS \"Model\", ROUND(metric_value::numeric, 4) AS \"Metric\", ROUND(threshold_value::numeric, 4) AS \"Threshold\", severity AS \"Severity\", window_start AS \"Window Start\", window_end AS \"Window End\" FROM anomaly_events WHERE $__timeFilter(detected_at) ORDER BY detected_at DESC LIMIT 100",
+        "format": "table"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "left", "displayMode": "auto", "inspect": false }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Severity" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "warning":  { "text": "warning",  "color": "yellow", "index": 0 },
+                      "critical": { "text": "critical", "color": "red",    "index": 1 }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Type" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "latency_spike": { "text": "latency_spike", "color": "orange", "index": 0 },
+                      "error_surge":   { "text": "error_surge",   "color": "red",    "index": 1 },
+                      "cost_spike":    { "text": "cost_spike",    "color": "purple", "index": 2 }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "footer": { "show": false },
+        "sortBy": [{ "displayName": "Detected At", "desc": true }]
+      }
+    },
+
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Live Event Feed",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 36 },
+      "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "postgresql-llm" },
+        "rawSql": "SELECT ts AS \"Time\", model AS \"Model\", user_id AS \"User\", prompt_tokens AS \"Prompt Tokens\", completion_tokens AS \"Completion Tokens\", ROUND(cost_usd::numeric, 6) AS \"Cost (USD)\", latency_ms AS \"Latency (ms)\", status AS \"Status\", COALESCE(error_code, '') AS \"Error\" FROM llm_events WHERE $__timeFilter(ts) ORDER BY ts DESC LIMIT 100",
+        "format": "table"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "left", "displayMode": "auto" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "success": { "text": "success", "color": "green",  "index": 0 },
+                      "error":   { "text": "error",   "color": "red",    "index": 1 },
+                      "timeout": { "text": "timeout", "color": "orange", "index": 2 }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Latency (ms)" },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background-solid"
+              },
+              {
+                "id": "color",
+                "value": { "mode": "thresholds" }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green",  "value": null },
+                    { "color": "yellow", "value": 1000 },
+                    { "color": "red",    "value": 3000 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "footer": { "show": false },
+        "sortBy": [{ "displayName": "Time", "desc": true }]
+      }
+    }
+
+  ]
+}

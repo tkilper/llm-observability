@@ -179,6 +179,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      ROLLUP_WINDOW_MINUTES: ${ROLLUP_WINDOW_MINUTES:-60}
+      ANOMALY_WINDOW_MINUTES: ${ANOMALY_WINDOW_MINUTES:-5}
     volumes:
       - ./flink/jobs:/opt/flink/jobs
     restart: "no"
