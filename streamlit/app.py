@@ -7,9 +7,10 @@ import os
 
 import pandas as pd
 import plotly.express as px
-import streamlit as st
 from sqlalchemy import create_engine, text
 from streamlit_autorefresh import st_autorefresh
+
+import streamlit as st
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -73,9 +74,15 @@ st.divider()
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 _requests = q(f"SELECT COUNT(*) AS cnt FROM llm_events WHERE ts >= NOW() - INTERVAL '{interval}'")
-_cost = q(f"SELECT COALESCE(ROUND(SUM(cost_usd)::numeric, 4), 0) AS cost FROM llm_events WHERE ts >= NOW() - INTERVAL '{interval}'")
-_latency = q(f"SELECT COALESCE(ROUND(AVG(latency_ms)::numeric, 0), 0) AS lat FROM llm_events WHERE ts >= NOW() - INTERVAL '{interval}' AND status = 'success'")
-_anomalies = q(f"SELECT COUNT(*) AS cnt FROM anomaly_events WHERE detected_at >= NOW() - INTERVAL '{interval}'")
+_cost = q(
+    f"SELECT COALESCE(ROUND(SUM(cost_usd)::numeric, 4), 0) AS cost FROM llm_events WHERE ts >= NOW() - INTERVAL '{interval}'"
+)
+_latency = q(
+    f"SELECT COALESCE(ROUND(AVG(latency_ms)::numeric, 0), 0) AS lat FROM llm_events WHERE ts >= NOW() - INTERVAL '{interval}' AND status = 'success'"
+)
+_anomalies = q(
+    f"SELECT COUNT(*) AS cnt FROM anomaly_events WHERE detected_at >= NOW() - INTERVAL '{interval}'"
+)
 
 total_requests = int(_requests["cnt"].iloc[0]) if not _requests.empty else 0
 total_cost = float(_cost["cost"].iloc[0]) if not _cost.empty else 0.0
@@ -103,7 +110,10 @@ with col1:
     """)
     if not df.empty:
         fig = px.line(
-            df, x="time", y="events", color="model",
+            df,
+            x="time",
+            y="events",
+            color="model",
             labels={"time": "", "events": "Events / min", "model": "Model"},
         )
         fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), legend_title_text="")
@@ -128,7 +138,10 @@ with col2:
     """)
     if not df.empty:
         fig = px.line(
-            df, x="time", y="error_rate", color="model",
+            df,
+            x="time",
+            y="error_rate",
+            color="model",
             labels={"time": "", "error_rate": "Error Rate (%)", "model": "Model"},
         )
         fig.add_hline(y=15, line_dash="dash", line_color="orange", annotation_text="Warning 15%")
@@ -155,7 +168,10 @@ with col3:
     """)
     if not df.empty:
         fig = px.line(
-            df, x="time", y="avg_latency_ms", color="model",
+            df,
+            x="time",
+            y="avg_latency_ms",
+            color="model",
             labels={"time": "", "avg_latency_ms": "Avg Latency (ms)", "model": "Model"},
         )
         fig.add_hline(y=1000, line_dash="dash", line_color="orange", annotation_text="Warning 1s")
@@ -179,7 +195,10 @@ with col4:
     """)
     if not df.empty:
         fig = px.line(
-            df, x="time", y="total_tokens", color="model",
+            df,
+            x="time",
+            y="total_tokens",
+            color="model",
             labels={"time": "", "total_tokens": "Tokens / min", "model": "Model"},
         )
         fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), legend_title_text="")
@@ -204,7 +223,10 @@ with col5:
     """)
     if not df.empty:
         fig = px.area(
-            df, x="time", y="cost_usd", color="model",
+            df,
+            x="time",
+            y="cost_usd",
+            color="model",
             labels={"time": "", "cost_usd": "Cost (USD)", "model": "Model"},
         )
         fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), legend_title_text="")
@@ -223,7 +245,10 @@ with col6:
     """)
     if not df.empty:
         fig = px.bar(
-            df, x="model", y="total_cost", color="model",
+            df,
+            x="model",
+            y="total_cost",
+            color="model",
             labels={"model": "Model", "total_cost": "Total Cost (USD)"},
         )
         fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), showlegend=False)
@@ -254,6 +279,7 @@ df_anomalies = q(f"""
 """)
 
 if not df_anomalies.empty:
+
     def _sev_color(val: str) -> str:
         if val == "critical":
             return "background-color: #ff4b4b; color: white"
@@ -264,14 +290,12 @@ if not df_anomalies.empty:
     def _type_color(val: str) -> str:
         return {
             "latency_spike": "color: #ff7043",
-            "error_surge":   "color: #ef5350",
-            "cost_spike":    "color: #ab47bc",
+            "error_surge": "color: #ef5350",
+            "cost_spike": "color: #ab47bc",
         }.get(val, "")
 
-    styled = (
-        df_anomalies.style
-        .map(_sev_color, subset=["severity"])
-        .map(_type_color, subset=["anomaly_type"])
+    styled = df_anomalies.style.map(_sev_color, subset=["severity"]).map(
+        _type_color, subset=["anomaly_type"]
     )
     st.dataframe(styled, use_container_width=True, hide_index=True)
 else:
@@ -300,10 +324,11 @@ df_live = q(f"""
 """)
 
 if not df_live.empty:
+
     def _status_color(val: str) -> str:
         return {
             "success": "color: #66bb6a",
-            "error":   "color: #ef5350",
+            "error": "color: #ef5350",
             "timeout": "color: #ffa726",
         }.get(val, "")
 

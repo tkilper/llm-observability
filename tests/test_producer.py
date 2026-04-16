@@ -9,8 +9,8 @@ import pytest
 
 import producer as p  # conftest.py sets sys.path and stubs confluent_kafka
 
-
 # ── Cost calculation ──────────────────────────────────────────────────────────
+
 
 class TestCalcCost:
     def test_gpt4o_known_values(self):
@@ -41,6 +41,7 @@ class TestCalcCost:
 
 # ── Token sampling ────────────────────────────────────────────────────────────
 
+
 class TestSampleTokens:
     def test_returns_two_integers(self):
         prompt, completion = p._sample_tokens()
@@ -60,11 +61,23 @@ class TestSampleTokens:
 
 # ── Normal event generation ───────────────────────────────────────────────────
 
+
 class TestGenerateEventNormal:
     REQUIRED_FIELDS = {
-        "event_id", "timestamp", "model", "provider", "user_id", "session_id",
-        "prompt_tokens", "completion_tokens", "total_tokens", "cost_usd",
-        "latency_ms", "status", "error_code", "request_id",
+        "event_id",
+        "timestamp",
+        "model",
+        "provider",
+        "user_id",
+        "session_id",
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "cost_usd",
+        "latency_ms",
+        "status",
+        "error_code",
+        "request_id",
     }
 
     def test_event_contains_all_required_fields(self):
@@ -109,10 +122,13 @@ class TestGenerateEventNormal:
 
 # ── Anomaly: latency spike ────────────────────────────────────────────────────
 
+
 class TestLatencySpikeAnomaly:
     def test_latency_spike_multiplies_latency(self):
         # Spike multiplies base latency by 6–18x, so spike avg >> normal avg
-        spike_latencies = [p.generate_event(anomaly_type="latency_spike")["latency_ms"] for _ in range(30)]
+        spike_latencies = [
+            p.generate_event(anomaly_type="latency_spike")["latency_ms"] for _ in range(30)
+        ]
         normal_latencies = [p.generate_event()["latency_ms"] for _ in range(30)]
         assert sum(spike_latencies) / 30 > sum(normal_latencies) / 30 * 3
 
@@ -125,6 +141,7 @@ class TestLatencySpikeAnomaly:
 
 
 # ── Anomaly: error burst ──────────────────────────────────────────────────────
+
 
 class TestErrorBurstAnomaly:
     def test_error_burst_produces_non_success_statuses(self):
@@ -152,6 +169,7 @@ class TestErrorBurstAnomaly:
 
 # ── Anomaly: token spike ──────────────────────────────────────────────────────
 
+
 class TestTokenSpikeAnomaly:
     def test_token_spike_respects_prompt_max(self):
         for _ in range(30):
@@ -164,6 +182,8 @@ class TestTokenSpikeAnomaly:
             assert event["completion_tokens"] <= 4_096
 
     def test_token_spike_inflates_token_counts(self):
-        spike_totals = [p.generate_event(anomaly_type="token_spike")["total_tokens"] for _ in range(30)]
+        spike_totals = [
+            p.generate_event(anomaly_type="token_spike")["total_tokens"] for _ in range(30)
+        ]
         normal_totals = [p.generate_event()["total_tokens"] for _ in range(30)]
         assert sum(spike_totals) / 30 > sum(normal_totals) / 30
