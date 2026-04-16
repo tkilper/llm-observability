@@ -1,17 +1,17 @@
 FROM flink:1.18.1-scala_2.12-java11
 
-# Install Python 3.9 (officially supported by PyFlink 1.18)
+# Install Python 3.11 (available in Debian Bookworm; supported by PyFlink 1.18)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.9 \
-    python3.9-dev \
+    python3.11 \
+    python3.11-dev \
     python3-pip \
     wget \
     curl \
     && rm -rf /var/lib/apt/lists/* \
-    && update-alternatives --install /usr/bin/python  python  /usr/bin/python3.9 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
+    && update-alternatives --install /usr/bin/python  python  /usr/bin/python3.11 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
-ENV PYFLINK_PYTHON=/usr/bin/python3.9
+ENV PYFLINK_PYTHON=/usr/bin/python3.11
 
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
