@@ -4,7 +4,9 @@
       "Bash(git:*)",
       "Bash(gh repo:*)",
       "Bash(where gh:*)",
-      "Bash(powershell -Command \"Get-Command gh | Select-Object -ExpandProperty Source\")"
+      "Bash(powershell -Command \"Get-Command gh | Select-Object -ExpandProperty Source\")",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest tests/ -v)"
     ]
   }
 }

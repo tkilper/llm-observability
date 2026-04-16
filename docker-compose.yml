@@ -93,22 +93,27 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Grafana ────────────────────────────────────────────────────────────────
-  grafana:
-    image: grafana/grafana:10.2.0
-    container_name: grafana
+  # ── Streamlit Dashboard ────────────────────────────────────────────────────
+  streamlit:
+    build:
+      context: ./streamlit
+      dockerfile: Dockerfile
+    container_name: streamlit
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "8501:8501"
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
-      GF_INSTALL_PLUGINS: grafana-clock-panel
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: grafana_reader
+      POSTGRES_PASSWORD: grafana_readonly
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ── Flink JobManager ───────────────────────────────────────────────────────
   flink-jobmanager:
@@ -216,7 +221,6 @@ services:
 
 volumes:
   postgres_data:
-  grafana_data:
 
 networks:
   default:
