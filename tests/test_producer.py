@@ -33,7 +33,6 @@ class TestCalcCost:
 
     def test_input_and_output_rates_are_independent(self):
         # Doubling only prompt tokens should not change completion cost
-        base = p._calc_cost("gpt-4o-mini", 100, 100)
         more_input = p._calc_cost("gpt-4o-mini", 200, 100)
         more_output = p._calc_cost("gpt-4o-mini", 100, 200)
         assert more_input != more_output  # different pricing tiers
