@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV PYFLINK_PYTHON=/usr/bin/python3.11
 
 COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+RUN python3.11 -m pip install --no-cache-dir --break-system-packages -r /tmp/requirements.txt
 
 # ── Connector JARs (placed in /opt/flink/lib so Flink picks them up on start)
 # Kafka SQL connector (fat jar — includes all Kafka client deps)
